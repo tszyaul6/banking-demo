@@ -1,0 +1,19 @@
+services:
+  mysql:
+    image: mysql:8.4.8
+    environment:
+      MYSQL_DATABASE: banking
+      MYSQL_USER: banking
+      MYSQL_PASSWORD: banking-local
+      MYSQL_ROOT_PASSWORD: root-local
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - banking-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot-local"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+volumes:
+  banking-data:

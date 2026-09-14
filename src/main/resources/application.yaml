@@ -1,0 +1,17 @@
+spring:
+  main:
+    web-application-type: none
+    banner-mode: "off"
+  datasource:
+    url: ${BANKING_DB_URL:jdbc:mysql://localhost:3307/banking}
+    username: ${BANKING_DB_USER:banking}
+    password: ${BANKING_DB_PASSWORD:banking-local}
+    hikari:
+      maximum-pool-size: 16
+      connection-timeout: 3000
+      connection-init-sql: SET SESSION innodb_lock_wait_timeout = 2
+      data-source-properties:
+        connectTimeout: 3000
+        socketTimeout: 7000
+  flyway:
+    enabled: true
