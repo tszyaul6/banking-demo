@@ -2,7 +2,6 @@ package com.example.banking.application;
 
 import com.example.banking.domain.AccountBalance;
 import com.example.banking.domain.BankingCommand;
-import com.example.banking.domain.Money;
 import com.example.banking.domain.OperationResult;
 import com.example.banking.persistence.BankingStore;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +27,8 @@ import static com.example.banking.domain.OperationResult.Outcome.SUCCEEDED;
 @Service
 @RequiredArgsConstructor
 public class TransactionalBankingOperations {
+    private static final long OVERDRAFT_LIMIT_MINOR = 10_000;
+
     private final BankingStore store;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED,
@@ -47,7 +48,7 @@ public class TransactionalBankingOperations {
             return OperationResult.rejected(command.getRequestId(), ACCOUNT_ALREADY_EXISTS);
         }
 
-        AccountBalance account = new AccountBalance(command.getAccountId(), command.getAmount());
+        AccountBalance account = new AccountBalance(command.getAccountId(), command.getAmount().getMinorUnits());
         if (command.getAmount().getMinorUnits() > 0) {
             store.addMovement(command.getRequestId(), account, command.getAmount().getMinorUnits());
         }
@@ -98,7 +99,7 @@ public class TransactionalBankingOperations {
                                                      Map<UUID, AccountBalance> accounts, long sourceDelta) {
         AccountBalance source = accounts.get(command.getAccountId());
         long amount = command.getAmount().getMinorUnits();
-        if (sourceDelta < 0 && source.getBalance().getMinorUnits() < amount) {
+        if (sourceDelta < 0 && source.getMinorUnits() - amount < -OVERDRAFT_LIMIT_MINOR) {
             return OperationResult.rejected(command.getRequestId(), INSUFFICIENT_FUNDS);
         }
 
@@ -132,7 +133,6 @@ public class TransactionalBankingOperations {
     }
 
     private static AccountBalance add(AccountBalance account, long delta) {
-        long updatedAmount = Math.addExact(account.getBalance().getMinorUnits(), delta);
-        return new AccountBalance(account.getAccountId(), Money.cents(updatedAmount));
+        return new AccountBalance(account.getAccountId(), Math.addExact(account.getMinorUnits(), delta));
     }
 }

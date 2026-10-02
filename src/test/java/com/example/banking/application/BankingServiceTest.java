@@ -52,7 +52,7 @@ class BankingServiceTest {
     @MethodSource("retryableFailures")
     void retriesSafeFailureThenReturnsResult(RuntimeException failure) throws InterruptedException {
         OperationResult success = OperationResult.succeeded(command.getRequestId(),
-                new AccountBalance(command.getAccountId(), Money.cents(10)), Optional.empty());
+                new AccountBalance(command.getAccountId(), 10), Optional.empty());
         when(transactions.execute(command)).thenThrow(failure)
                 .thenReturn(success);
         assertThat(banking.deposit(command)).isEqualTo(success);

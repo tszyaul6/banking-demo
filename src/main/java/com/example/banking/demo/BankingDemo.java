@@ -13,6 +13,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Component
@@ -47,7 +48,11 @@ public class BankingDemo implements ApplicationRunner {
 
         WithdrawalCommand newWithdrawal = new WithdrawalCommand(UUID.randomUUID(), alice, Money.hkd("80"));
         System.out.println("New withdrawal 80: " + banking.withdraw(newWithdrawal).getOutcome());
-        System.out.println("Alice balance: " + banking.getBalance(alice).orElseThrow().getBalance());
-        System.out.println("Bob balance: " + banking.getBalance(bob).orElseThrow().getBalance());
+        System.out.println("Alice balance: " + hkd(banking.getBalance(alice).orElseThrow().getMinorUnits()));
+        System.out.println("Bob balance: " + hkd(banking.getBalance(bob).orElseThrow().getMinorUnits()));
+    }
+
+    private static String hkd(long minorUnits) {
+        return "HKD " + BigDecimal.valueOf(minorUnits, 2).toPlainString();
     }
 }

@@ -12,10 +12,10 @@ import java.util.UUID;
 @ToString
 public final class AccountBalance {
     private final UUID accountId;
-    private final Money balance;
+    private final long minorUnits;
 
-    public AccountBalance(UUID accountId, Money balance) {
+    public AccountBalance(UUID accountId, long minorUnits) {
         this.accountId = Objects.requireNonNull(accountId, "accountId");
-        this.balance = Objects.requireNonNull(balance, "balance");
+        this.minorUnits = minorUnits;
     }
 }

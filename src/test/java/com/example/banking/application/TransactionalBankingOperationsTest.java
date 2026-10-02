@@ -38,14 +38,14 @@ class TransactionalBankingOperationsTest {
         UUID sourceId = reverse ? SECOND_ID : FIRST_ID;
         UUID destinationId = reverse ? FIRST_ID : SECOND_ID;
         TransferCommand command = new TransferCommand(UUID.randomUUID(), sourceId, destinationId, Money.cents(30));
-        when(store.lockAccount(FIRST_ID)).thenReturn(Optional.of(new AccountBalance(FIRST_ID, Money.cents(100))));
-        when(store.lockAccount(SECOND_ID)).thenReturn(Optional.of(new AccountBalance(SECOND_ID, Money.cents(100))));
+        when(store.lockAccount(FIRST_ID)).thenReturn(Optional.of(new AccountBalance(FIRST_ID, 100)));
+        when(store.lockAccount(SECOND_ID)).thenReturn(Optional.of(new AccountBalance(SECOND_ID, 100)));
 
         OperationResult result = operations.execute(command);
 
         assertThat(result.getOutcome()).isEqualTo(SUCCEEDED);
-        assertThat(result.getAccount()).contains(new AccountBalance(sourceId, Money.cents(70)));
-        assertThat(result.getDestination()).contains(new AccountBalance(destinationId, Money.cents(130)));
+        assertThat(result.getAccount()).contains(new AccountBalance(sourceId, 70));
+        assertThat(result.getDestination()).contains(new AccountBalance(destinationId, 130));
         InOrder order = inOrder(store);
         order.verify(store).claim(command);
         order.verify(store).lockAccount(FIRST_ID);
@@ -63,9 +63,9 @@ class TransactionalBankingOperationsTest {
     @Test
     void destinationOverflowIsRejectedBeforeAnyBalanceOrMovementWrite() {
         TransferCommand command = new TransferCommand(UUID.randomUUID(), FIRST_ID, SECOND_ID, Money.cents(1));
-        when(store.lockAccount(FIRST_ID)).thenReturn(Optional.of(new AccountBalance(FIRST_ID, Money.cents(100))));
+        when(store.lockAccount(FIRST_ID)).thenReturn(Optional.of(new AccountBalance(FIRST_ID, 100)));
         when(store.lockAccount(SECOND_ID))
-                .thenReturn(Optional.of(new AccountBalance(SECOND_ID, Money.cents(Long.MAX_VALUE))));
+                .thenReturn(Optional.of(new AccountBalance(SECOND_ID, Long.MAX_VALUE)));
 
         OperationResult result = operations.execute(command);
 

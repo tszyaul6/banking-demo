@@ -3,7 +3,7 @@ CREATE TABLE accounts (
     currency CHAR(3) CHARACTER SET ascii NOT NULL,
     balance_minor BIGINT NOT NULL,
     created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    CONSTRAINT ck_account_balance CHECK (balance_minor >= 0),
+    CONSTRAINT ck_account_balance CHECK (balance_minor >= -10000),
     CONSTRAINT ck_account_currency CHECK (currency = 'HKD')
 ) ENGINE = InnoDB;
 
@@ -22,10 +22,10 @@ CREATE TABLE operations (
         'ACCOUNT_ALREADY_EXISTS', 'BALANCE_LIMIT_EXCEEDED')),
     CONSTRAINT ck_operation_account CHECK (
         (account_id IS NULL AND account_balance IS NULL) OR
-        (account_id IS NOT NULL AND account_balance IS NOT NULL AND account_balance >= 0)),
+        (account_id IS NOT NULL AND account_balance IS NOT NULL AND account_balance >= -10000)),
     CONSTRAINT ck_operation_destination CHECK (
         (destination_id IS NULL AND destination_balance IS NULL) OR
-        (destination_id IS NOT NULL AND destination_balance IS NOT NULL AND destination_balance >= 0))
+        (destination_id IS NOT NULL AND destination_balance IS NOT NULL AND destination_balance >= -10000))
 ) ENGINE = InnoDB;
 
 CREATE TABLE account_movements (
@@ -39,6 +39,6 @@ CREATE TABLE account_movements (
     CONSTRAINT fk_movement_operation FOREIGN KEY (request_id) REFERENCES operations(request_id),
     CONSTRAINT fk_movement_account FOREIGN KEY (account_id) REFERENCES accounts(account_id),
     CONSTRAINT ck_movement_amount CHECK (amount_minor <> 0),
-    CONSTRAINT ck_movement_balance CHECK (balance_after >= 0),
+    CONSTRAINT ck_movement_balance CHECK (balance_after >= -10000),
     INDEX ix_movement_account (account_id, movement_id)
 ) ENGINE = InnoDB;

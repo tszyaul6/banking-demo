@@ -84,7 +84,7 @@ class ValueEqualityTest {
     }
 
     private static AccountBalance snapshot(long amount) {
-        return new AccountBalance(ACCOUNT_ID, Money.cents(amount));
+        return new AccountBalance(ACCOUNT_ID, amount);
     }
 
     private static OperationResult success(long amount) {

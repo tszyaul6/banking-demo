@@ -32,7 +32,7 @@ OperationResult result = bankingService.createAccount(command);
 
 - Use a new request ID for each intended operation; save and reuse it for retries.
 - HKD amounts use exact `long` cents. Only opening deposits may be zero.
-- Invalid input and self-transfers are rejected. Overdrafts and overflow never change balances.
+- Invalid input and self-transfers are rejected. Accounts may overdraw down to -HKD 100.00 and no further; rejected requests and overflow never change balances.
 - Replays return the original result, including rejections and historical balances.
 - Use `getBalance` for current balances. An empty `getOperation` result does not prove an in-flight request failed.
 - Operations have no arrival-order guarantee. Wait for a deposit to succeed before a dependent withdrawal.

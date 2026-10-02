@@ -50,7 +50,7 @@ Configured timeouts: connection acquisition 3s, row-lock wait 2s, transaction 5s
 
 ## Storage and limits
 
-`accounts` holds balances; `operations` holds requests and results; `account_movements` holds signed changes and resulting balances. All commit together. Positive opening deposits create movements; zero openings do not. Database constraints protect nonnegative balances, HKD currency, and movement uniqueness.
+`accounts` holds balances; `operations` holds requests and results; `account_movements` holds signed changes and resulting balances. All commit together. Positive opening deposits create movements; zero openings do not. Database constraints protect balances at or above -HKD 100.00, HKD currency, and movement uniqueness.
 
 Each instance has up to 16 connections. Independent accounts can progress concurrently; busy accounts serialize. Throughput and database failover are untested. Authentication, external settlement, multiple currencies, and a full double-entry ledger are outside scope.
 

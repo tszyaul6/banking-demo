@@ -13,8 +13,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 class OperationResultTest {
     private final UUID requestId = UUID.randomUUID();
-    private final AccountBalance account = new AccountBalance(UUID.randomUUID(), Money.cents(100));
-    private final AccountBalance destination = new AccountBalance(UUID.randomUUID(), Money.cents(20));
+    private final AccountBalance account = new AccountBalance(UUID.randomUUID(), 100);
+    private final AccountBalance destination = new AccountBalance(UUID.randomUUID(), 20);
 
     @Test
     void successRequiresAnAccountEvenWhenDestinationIsPresent() {

@@ -64,7 +64,7 @@ public class BankingStore {
 
     public void updateBalance(AccountBalance account) {
         String accountId = account.getAccountId().toString();
-        long balance = account.getBalance().getMinorUnits();
+        long balance = account.getMinorUnits();
         int affectedRows = jdbc.update("UPDATE accounts SET balance_minor = ? WHERE account_id = ?",
                 balance, accountId);
         requireOne(affectedRows);
@@ -73,7 +73,7 @@ public class BankingStore {
     public void addMovement(UUID requestId, AccountBalance account, long signedAmount) {
         String requestIdValue = requestId.toString();
         String accountId = account.getAccountId().toString();
-        long balanceAfter = account.getBalance().getMinorUnits();
+        long balanceAfter = account.getMinorUnits();
         jdbc.update("""
                 INSERT INTO account_movements(request_id, account_id, amount_minor, balance_after)
                 VALUES (?, ?, ?, ?)
@@ -84,12 +84,10 @@ public class BankingStore {
         String requestId = result.getRequestId().toString();
         String outcome = result.getOutcome().name();
         String accountId = result.getAccount().map(account -> account.getAccountId().toString()).orElse(null);
-        Long accountBalance = result.getAccount()
-                .map(account -> account.getBalance().getMinorUnits()).orElse(null);
+        Long accountBalance = result.getAccount().map(AccountBalance::getMinorUnits).orElse(null);
         String destinationId = result.getDestination()
                 .map(account -> account.getAccountId().toString()).orElse(null);
-        Long destinationBalance = result.getDestination()
-                .map(account -> account.getBalance().getMinorUnits()).orElse(null);
+        Long destinationBalance = result.getDestination().map(AccountBalance::getMinorUnits).orElse(null);
 
         int affectedRows = jdbc.update("""
                 UPDATE operations
@@ -110,8 +108,7 @@ public class BankingStore {
 
     private AccountBalance mapAccount(ResultSet row, int rowNumber) throws SQLException {
         UUID accountId = UUID.fromString(row.getString("account_id"));
-        Money balance = Money.cents(row.getLong("balance_minor"));
-        return new AccountBalance(accountId, balance);
+        return new AccountBalance(accountId, row.getLong("balance_minor"));
     }
 
     private StoredOperation mapOperation(ResultSet row, int rowNumber) throws SQLException {
@@ -130,8 +127,7 @@ public class BankingStore {
         if (accountId == null) {
             return Optional.empty();
         }
-        Money balance = Money.cents(row.getLong(amountColumn));
-        return Optional.of(new AccountBalance(UUID.fromString(accountId), balance));
+        return Optional.of(new AccountBalance(UUID.fromString(accountId), row.getLong(amountColumn)));
     }
 
     private static void requireOne(int affectedRows) {

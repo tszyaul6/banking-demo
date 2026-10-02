@@ -103,8 +103,8 @@ class BankingIT {
         TransferCommand transfer = new TransferCommand(UUID.randomUUID(), alice, bob, Money.cents(3_000));
         OperationResult result = first.transfer(transfer);
         assertThat(result.getOutcome()).isEqualTo(SUCCEEDED);
-        assertThat(result.getAccount().orElseThrow().getBalance()).isEqualTo(Money.cents(7_000));
-        assertThat(result.getDestination().orElseThrow().getBalance()).isEqualTo(Money.cents(3_000));
+        assertThat(result.getAccount().orElseThrow().getMinorUnits()).isEqualTo(7_000);
+        assertThat(result.getDestination().orElseThrow().getMinorUnits()).isEqualTo(3_000);
         first.deposit(new DepositCommand(UUID.randomUUID(), alice, Money.cents(500)));
         assertThat(second.transfer(transfer)).isEqualTo(result);
         assertThat(balance(alice)).isEqualTo(7_500);
@@ -117,13 +117,13 @@ class BankingIT {
     @Test
     void rejectedWithdrawalStaysRejectedAfterDepositAndNewRequestCanSucceed() {
         UUID account = create(0);
-        WithdrawalCommand withdrawal = new WithdrawalCommand(UUID.randomUUID(), account, Money.cents(100));
+        WithdrawalCommand withdrawal = new WithdrawalCommand(UUID.randomUUID(), account, Money.cents(10_100));
         OperationResult result = first.withdraw(withdrawal);
         assertThat(result.getOutcome()).isEqualTo(INSUFFICIENT_FUNDS);
-        second.deposit(new DepositCommand(UUID.randomUUID(), account, Money.cents(100)));
+        second.deposit(new DepositCommand(UUID.randomUUID(), account, Money.cents(10_100)));
         assertThat(first.withdraw(withdrawal)).isEqualTo(result);
-        assertThat(balance(account)).isEqualTo(100);
-        assertThat(first.withdraw(new WithdrawalCommand(UUID.randomUUID(), account, Money.cents(100))).getOutcome())
+        assertThat(balance(account)).isEqualTo(10_100);
+        assertThat(first.withdraw(new WithdrawalCommand(UUID.randomUUID(), account, Money.cents(10_100))).getOutcome())
                 .isEqualTo(SUCCEEDED);
         assertThat(balance(account)).isZero();
     }
@@ -189,10 +189,10 @@ class BankingIT {
     void concurrentWithdrawalsCannotOverdraw() throws Exception {
         UUID account = create(100);
         List<OperationResult> results = concurrently(100, index -> () -> service(index).withdraw(
-                new WithdrawalCommand(UUID.randomUUID(), account, Money.cents(10))));
-        assertThat(results.stream().filter(result -> result.getOutcome() == SUCCEEDED).count()).isEqualTo(10);
-        assertThat(results.stream().filter(result -> result.getOutcome() == INSUFFICIENT_FUNDS).count()).isEqualTo(90);
-        assertThat(balance(account)).isZero();
+                new WithdrawalCommand(UUID.randomUUID(), account, Money.cents(200))));
+        assertThat(results.stream().filter(result -> result.getOutcome() == SUCCEEDED).count()).isEqualTo(50);
+        assertThat(results.stream().filter(result -> result.getOutcome() == INSUFFICIENT_FUNDS).count()).isEqualTo(50);
+        assertThat(balance(account)).isEqualTo(-9_900);
     }
 
     @Test
@@ -311,7 +311,7 @@ class BankingIT {
             BankingService banking = restarted.getBean(BankingService.class);
             OperationResult result = banking.deposit(command);
             assertThat(result.getOutcome()).isEqualTo(SUCCEEDED);
-            assertThat(result.getAccount().orElseThrow().getBalance()).isEqualTo(Money.cents(125));
+            assertThat(result.getAccount().orElseThrow().getMinorUnits()).isEqualTo(125);
             assertThat(balance(account)).isEqualTo(125);
             assertThat(movementCount(command.getRequestId())).isEqualTo(1);
         }
@@ -340,8 +340,8 @@ class BankingIT {
             List<String> output = new ArrayList<>(firstWorker.awaitOutput());
             output.addAll(secondWorker.awaitOutput());
             assertThat(output.stream().filter("DEPOSIT SUCCEEDED"::equals).count()).isEqualTo(2);
-            assertThat(output).contains("WITHDRAWAL SUCCEEDED", "WITHDRAWAL INSUFFICIENT_FUNDS");
-            assertThat(balance(account)).isEqualTo(20);
+            assertThat(output.stream().filter("WITHDRAWAL SUCCEEDED"::equals).count()).isEqualTo(2);
+            assertThat(balance(account)).isEqualTo(-60);
             assertThat(movementCount(sharedKey)).isEqualTo(1);
         }
     }
@@ -362,7 +362,7 @@ class BankingIT {
     }
 
     private static long balance(UUID account) {
-        return first.getBalance(account).orElseThrow().getBalance().getMinorUnits();
+        return first.getBalance(account).orElseThrow().getMinorUnits();
     }
 
     private static int movementCount(UUID request) {
